@@ -6,6 +6,12 @@ start_date = datetime(1970, 1, 1)
 end_date = datetime.now().date()
 
 filename = 'data/tickers/sp500.json'
+dst_path = 'data/yahoo/sp500/'
+
+# filename = 'data/tickers/other.json'
+# dst_path = 'data/yahoo/other/'
+
+
 with open(filename, 'r') as f:
     sp500_tickers = json.load(f)
 
@@ -21,7 +27,7 @@ for ticker in sp500_tickers:
     try:
         df = pdr.get_data_yahoo(symbols=ticker, start=start_date, end=end_date)
         df.drop(df.columns[[0,1,2,4,5]], axis=1, inplace=True)
-        filename = 'data/yahoo/sp500/' + ticker + '.csv'
+        filename = dst_path + ticker + '.csv'
         df.to_csv(filename, index=True)
 
         sp500_success.append(ticker)
