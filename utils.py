@@ -61,13 +61,9 @@ def merge_csv(src_path, dst_path, filename='dataset', how='outer'):
     df1.to_csv(dst_path + filename + '.csv')
 
 
-def dataa(dataset_path, data_size, input_tickers, output_tickers, step_size=0, input_size=60, output_size=20, feature_range=(0,1)):
+def dataa(dataframe, data_size, input_tickers, output_tickers, step_size=0, input_size=60, output_size=20, feature_range=(0,1)):
 
-    if step_size==0:
-        step_size = input_size
-
-    df = pd.read_csv(dataset_path)
-
+    df = dataframe.copy()
     # predict_df = df[-input_size:]
     df = df[-data_size-input_size:-input_size]
     df = df.dropna(axis=1)
@@ -78,9 +74,15 @@ def dataa(dataset_path, data_size, input_tickers, output_tickers, step_size=0, i
     in_drop_list = list(set(df.columns) - set(input_tickers))
     out_drop_list = list(set(df.columns) - set(output_tickers))
 
+    print(set(input_tickers) - set(df.columns))
+
+    print(len(in_df.columns), len(out_df.columns))
+
     in_df.drop(in_drop_list,axis=1,inplace=True)
     out_df.drop(out_drop_list,axis=1,inplace=True)
     # predict_df.drop(in_drop_list,axis=1,inplace=True)
+
+    print(len(in_df.columns), len(out_df.columns))
 
     scaler = MinMaxScaler(feature_range=feature_range)
     in_dataset_scaled = scaler.fit_transform(in_df.values)
@@ -146,3 +148,31 @@ def validation_plot(train_arr, val_arr, f=plt.show, type='loss'):
     plt.xlabel('epoch')
     plt.legend(['train', 'validation'], loc='upper right')
     f()
+
+def get_tickers_in_range(df, day_range):
+
+    (min, max) = day_range
+    
+
+    df1 = df.copy()
+    df1 = df1[- (min - 1):].dropna(axis=1)
+
+    if max == 'MAX':
+        return list(df1.columns)
+
+    df2 = df.copy()
+    df2 = df2[- (max - 1):].dropna(axis=1)
+
+    tickers_list = list(set(df1.columns) - set(df2.columns))
+
+    return tickers_list
+
+def array_to_dict(dic, arr, tickers):
+
+    d = dic.copy()
+
+    for i in range(arr.shape[1]):
+        ticker = tickers[i]
+        d[ticker] = arr[0,i,:]
+
+    return d
