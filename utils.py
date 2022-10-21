@@ -146,13 +146,13 @@ def validation_plot(train_arr, val_arr, f=plt.show, plot_type='loss'):
         argf = np.argmin
         valf = np.min
         title = 'min'
-        pos1, pos2 = 'upper right', 'lower left'
+        pos1, pos2 = 'upper right', 'upper left'
         
     else:
         argf = np.argmax
         valf = np.max
         title = 'max'
-        pos1, pos2 = 'lower right', 'upper left'
+        pos1, pos2 = 'lower right', 'lower left'
 
     plt.plot(train_arr)
     plt.plot(val_arr)
