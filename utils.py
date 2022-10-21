@@ -67,7 +67,7 @@ def dataa(dataset_path, data_size, input_tickers, output_tickers, step_size=0, i
 
     df = pd.read_csv(dataset_path)
 
-    predict_df = df[-input_size:]
+    # predict_df = df[-input_size:]
     df = df[-data_size-input_size:-input_size]
     df = df.dropna(axis=1)
 
@@ -79,12 +79,12 @@ def dataa(dataset_path, data_size, input_tickers, output_tickers, step_size=0, i
 
     in_df.drop(in_drop_list,axis=1,inplace=True)
     out_df.drop(out_drop_list,axis=1,inplace=True)
-    predict_df.drop(in_drop_list,axis=1,inplace=True)
+    # predict_df.drop(in_drop_list,axis=1,inplace=True)
 
     scaler = MinMaxScaler(feature_range=feature_range)
     in_dataset_scaled = scaler.fit_transform(in_df.values)
     out_dataset_scaled = scaler.fit_transform(out_df.values)
-    x_predic = scaler.fit_transform(predict_df.values)
+    # x_predic = scaler.fit_transform(predict_df.values)
 
     x = []
     y = []
@@ -96,11 +96,10 @@ def dataa(dataset_path, data_size, input_tickers, output_tickers, step_size=0, i
 
     x, y = np.array(x), np.array(y)
 
-    output_tickers.sort()
-
     dic = {ticker:[] for ticker in output_tickers}
 
-    return scaler, x, y, dic, x_predic
+    # return scaler, x, y, dic, x_predic
+    return scaler, x, y, dic
 
 
 def train_val_test_split(x, y, train_ratio=0.7, validation_ratio=0.15, test_ratio=0.15):
@@ -109,7 +108,7 @@ def train_val_test_split(x, y, train_ratio=0.7, validation_ratio=0.15, test_rati
 
     return x_train, y_train, x_val, y_val, x_test, y_test
 
-    
+
 
 def create_model(input_shape, output_shape, layers_info):
 
@@ -117,14 +116,15 @@ def create_model(input_shape, output_shape, layers_info):
 
     model = Sequential()
 
-    (units, dropout_rate) = layers_info[0]
+    (units, dropout_rate, ret) = layers_info[0]
 
-    model.add(LSTM(units=50,return_sequences=True, input_shape=input_shape))
+    model.add(LSTM(units=units,return_sequences=ret, input_shape=input_shape))
     model.add(Dropout(dropout_rate))
-    
-    for (units, dropout_rate) in layers_info[1:]:
 
-        model.add(LSTM(units=units, return_sequences=True))
+    
+    for (units, dropout_rate, ret) in layers_info[1:]:
+
+        model.add(LSTM(units=units, return_sequences=ret))
         model.add(Dropout(dropout_rate))
 
     model.add(Dense(units=num_els))
