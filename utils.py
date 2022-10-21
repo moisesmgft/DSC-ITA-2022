@@ -1,3 +1,4 @@
+from turtle import title
 import pandas_datareader as pdr
 from datetime import datetime
 import json
@@ -137,17 +138,47 @@ def create_model(input_shape, output_shape, layers_info):
 
     return model
 
-def validation_plot(train_arr, val_arr, f=plt.show, type='loss'):
+def validation_plot(train_arr, val_arr, f=plt.show, plot_type='loss'):
 
     # f= lambda: plt.savefig(path)
+
+    if plot_type == 'loss':
+        argf = np.argmin
+        valf = np.min
+        title = 'min'
+        pos1, pos2 = 'upper right', 'lower left'
+        
+    else:
+        argf = np.argmax
+        valf = np.max
+        title = 'max'
+        pos1, pos2 = 'lower right', 'upper left'
 
     plt.plot(train_arr)
     plt.plot(val_arr)
     plt.title('model train vs validation loss')
-    plt.ylabel(type)
+    plt.ylabel(plot_type)
     plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper right')
+    legend1 = plt.legend(['train', 'validation'], loc=pos1, title=plot_type)
+
+
+    xval = argf(val_arr)
+    yval = valf(val_arr)
+
+    xtrain = argf(train_arr)
+    ytrain = valf(train_arr)
+
+    plt.scatter(xtrain, ytrain)
+    plt.scatter(xval, yval)
+    
+    legend2 = plt.legend([str(ytrain), str(yval)], loc=pos2, title=title)
+
+    ax = plt.gca()
+    ax.add_artist(legend1)
+    ax.add_artist(legend2)
+    
     f()
+    plt.close()
 
 def get_tickers_in_range(df, day_range):
 
