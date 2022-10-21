@@ -8,6 +8,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, LSTM, Reshape
+from matplotlib import pyplot as plt
 
 def download_data(tickers_path, dst_path, start_date=datetime(1970, 1, 1), end_date=datetime.now().date(), columns=['Close']):
 
@@ -133,3 +134,15 @@ def create_model(input_shape, output_shape, layers_info):
     model.compile(optimizer='adam',loss='mse',metrics=['accuracy'])
 
     return model
+
+def validation_plot(train_arr, val_arr, f=plt.show, type='loss'):
+
+    # f= lambda: plt.savefig(path)
+
+    plt.plot(train_arr)
+    plt.plot(val_arr)
+    plt.title('model train vs validation loss')
+    plt.ylabel(type)
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper right')
+    f()
