@@ -1,3 +1,4 @@
+from platform import platform
 from turtle import title
 import pandas_datareader as pdr
 from datetime import datetime
@@ -10,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, LSTM, Reshape
 from matplotlib import pyplot as plt
+from keras import backend
 
 def download_data(tickers_path, dst_path, start_date=datetime(1970, 1, 1), end_date=datetime.now().date(), columns=['Close']):
 
@@ -113,8 +115,18 @@ def train_val_test_split(x, y, train_ratio=0.7, validation_ratio=0.15, test_rati
     return x_train, y_train, x_val, y_val, x_test, y_test
 
 
+ 
+def var(y_true, y_pred, axis):
+	return backend.mean(backend.sum((y_pred - y_true) - backend.mean(y_pred - y_true, axis=axis, keepdims=True), axis=axis, keepdims=True), axis=axis)
 
-def create_model(input_shape, output_shape, layers_info):
+def mse(y_true, y_pred, axis=-1):
+    return backend.mean(backend.square(y_pred - y_true), axis=axis)
+
+def E(y_true, y_pred):
+	return backend.sqrt(var(y_true, y_pred,axis=0) + mse(y_true, y_pred, axis=0))
+
+
+def create_model(input_shape, output_shape, layers_info, loss=E, metrics=['accuracy', 'mse']):
 
     num_els = output_shape[0] * output_shape[1]
 
@@ -134,29 +146,29 @@ def create_model(input_shape, output_shape, layers_info):
     model.add(Dense(units=num_els))
     model.add(Reshape(output_shape))
     
-    model.compile(optimizer='adam',loss='mse',metrics=['accuracy'])
+    model.compile(optimizer='adam',loss=loss,metrics=metrics)
 
     return model
 
-def validation_plot(train_arr, val_arr, f=plt.show, plot_type='loss'):
+def validation_plot(train_arr, val_arr, title, f=plt.show, plot_type='loss',):
 
     # f= lambda: plt.savefig(path)
 
-    if plot_type == 'loss':
+    if plot_type == 'loss' or plot_type == 'mse':
         argf = np.argmin
         valf = np.min
         title = 'min'
-        pos1, pos2 = 'upper right', 'lower left'
+        pos1, pos2 = 'upper right', 'upper left'
         
     else:
         argf = np.argmax
         valf = np.max
         title = 'max'
-        pos1, pos2 = 'lower right', 'upper left'
+        pos1, pos2 = 'lower right', 'lower left'
 
     plt.plot(train_arr)
     plt.plot(val_arr)
-    plt.title('model train vs validation loss')
+    plt.title(title)
     plt.ylabel(plot_type)
     plt.xlabel('epoch')
     legend1 = plt.legend(['train', 'validation'], loc=pos1, title=plot_type)
