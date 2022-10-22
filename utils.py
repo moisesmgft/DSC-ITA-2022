@@ -1,5 +1,5 @@
-from platform import platform
-from turtle import title
+import csv
+from optparse import Values
 import pandas_datareader as pdr
 from datetime import datetime
 import json
@@ -64,7 +64,9 @@ def merge_csv(src_path, dst_path, filename='dataset', how='outer'):
     df1.to_csv(dst_path + filename + '.csv')
 
 
-def dataa(dataframe, data_size, input_tickers, output_tickers, step_size=0, input_size=60, output_size=20, feature_range=(0,1)):
+def dataa(dataframe, data_size, input_tickers, output_tickers, \
+        step_size=0, input_size=60, output_size=20, \
+        feature_range=(0,1), return_log = True):
 
     df = dataframe.copy()
     # predict_df = df[-input_size:]
@@ -77,9 +79,6 @@ def dataa(dataframe, data_size, input_tickers, output_tickers, step_size=0, inpu
     in_drop_list = list(set(df.columns) - set(input_tickers))
     out_drop_list = list(set(df.columns) - set(output_tickers))
 
-    print(set(input_tickers) - set(df.columns))
-
-    print(len(in_df.columns), len(out_df.columns))
 
     in_df.drop(in_drop_list,axis=1,inplace=True)
     out_df.drop(out_drop_list,axis=1,inplace=True)
@@ -87,18 +86,30 @@ def dataa(dataframe, data_size, input_tickers, output_tickers, step_size=0, inpu
 
     print(len(in_df.columns), len(out_df.columns))
 
+    assert len(in_df.columns) == len(input_tickers)
+    assert len(out_df.columns) == len(output_tickers)
+
+
+    if return_log:
+        in_ = to_return_log(in_df.values, 20, axis=0)
+        out_ = to_return_log(out_df.values, 20, axis=0)
+    else:
+        in_ = in_df.values
+        out_ = out_df.values
+
+
     scaler = MinMaxScaler(feature_range=feature_range)
-    in_dataset_scaled = scaler.fit_transform(in_df.values)
-    out_dataset_scaled = scaler.fit_transform(out_df.values)
+    in_data = scaler.fit_transform(in_)
+    out_data = scaler.fit_transform(out_)
     # x_predic = scaler.fit_transform(predict_df.values)
 
     x = []
     y = []
 
-    for i in range(input_size, in_dataset_scaled.shape[0]-output_size, step_size):
+    for i in range(input_size, in_data.shape[0]-output_size, step_size):
         # adicionar passo
-        x.append(in_dataset_scaled[i-input_size:i,:])
-        y.append(out_dataset_scaled[i:i+output_size,:])
+        x.append(in_data[i-input_size:i,:])
+        y.append(out_data[i:i+output_size,:])
 
     x, y = np.array(x), np.array(y)
 
@@ -210,12 +221,54 @@ def get_tickers_in_range(df, day_range):
 
     return tickers_list
 
-def array_to_dict(dic, arr, tickers):
+def array_to_dict(arr, tickers):
 
-    d = dic.copy()
+    d = {}
 
-    for i in range(arr.shape[1]):
+    for i in range(len(tickers)):
         ticker = tickers[i]
-        d[ticker] = arr[0,i,:]
+        d[ticker] = list(arr[0,:,i])
 
     return d
+
+def return_log(arr1, arr2):
+    return np.log(arr1) - np.log(arr2)
+
+def to_return_log(arr, k, axis):
+    n = arr.shape[axis] - k 
+    r = []
+
+    for i in range(n):
+        r.append(
+            return_log(np.take(arr, i+k, axis=axis), (np.take(arr, i, axis=axis)))
+        )
+
+    return np.array(r)
+
+def generate_csv(dic):
+    append_matrix = []
+
+    for key, value in sorted(dic.items()):
+        
+        append_matrix.append([key]+value)
+
+    append_matrix = np.array(append_matrix).T
+
+    with open("predicao.csv", 'w') as file:
+        header = ['Dia']
+        for nome in append_matrix[0,:]:
+            header.append(nome)
+        
+        data = []
+
+        i = 1
+        for row in append_matrix[1:,:]:
+            nrow = [i]
+            for share in row:
+                nrow.append(share)
+            data.append(nrow)
+            i += 1
+        
+        csvwriter = csv.writer(file)
+        csvwriter.writerow(header)
+        csvwriter.writerows(data) 
