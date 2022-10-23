@@ -161,6 +161,20 @@ def create_model(input_shape, output_shape, layers_info, loss=E, metrics=['accur
 
     return model
 
+def create_model2(output_shape, layers_info, optimizer='adam', loss=E, metrics=['accuracy', 'mse']):
+
+    num_els = output_shape[0] * output_shape[1]
+
+    model = Sequential()
+    
+    for layer in layers_info:
+
+        model.add(layer)
+    
+    model.compile(optimizer=optimizer,loss=loss,metrics=metrics)
+
+    return model
+
 def validation_plot(train_arr, val_arr, title, f=plt.show, plot_type='loss',):
 
     # f= lambda: plt.savefig(path)
